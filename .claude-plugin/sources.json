@@ -1,0 +1,14 @@
+{
+  "plugins": {
+    "archpillar-localization": {
+      "sourceRepo": "https://github.com/ArchPillar/extensions",
+      "version": "1.5.0-preview1",
+      "dir": "localization"
+    },
+    "archpillar-mapper": {
+      "sourceRepo": "https://github.com/ArchPillar/extensions",
+      "version": "1.5.0-preview1",
+      "dir": "mapper"
+    }
+  }
+}

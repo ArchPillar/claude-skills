@@ -1,0 +1,17 @@
+{
+  "name": "archpillar-mapper",
+  "version": "1.5.0-preview1",
+  "description": "A lightweight .NET mapping library built on expression trees.",
+  "author": {
+    "name": "ArchPillar"
+  },
+  "homepage": "https://github.com/ArchPillar/extensions",
+  "repository": "https://github.com/ArchPillar/extensions",
+  "license": "MIT",
+  "keywords": [
+    "archpillar",
+    "mapper",
+    "dotnet",
+    "agent-skill"
+  ]
+}

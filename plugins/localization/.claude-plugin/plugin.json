@@ -1,0 +1,17 @@
+{
+  "name": "archpillar-localization",
+  "version": "1.5.0-preview1",
+  "description": "A UI translation library where every translatable string is written once, at the call site, as an in-code ICU MessageFormat default.",
+  "author": {
+    "name": "ArchPillar"
+  },
+  "homepage": "https://github.com/ArchPillar/extensions",
+  "repository": "https://github.com/ArchPillar/extensions",
+  "license": "MIT",
+  "keywords": [
+    "archpillar",
+    "localization",
+    "dotnet",
+    "agent-skill"
+  ]
+}

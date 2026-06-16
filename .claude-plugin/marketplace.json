@@ -1,0 +1,18 @@
+{
+  "name": "archpillar",
+  "owner": {
+    "name": "ArchPillar"
+  },
+  "plugins": [
+    {
+      "name": "archpillar-localization",
+      "source": "./plugins/localization",
+      "description": "A UI translation library where every translatable string is written once, at the call site, as an in-code ICU MessageFormat default."
+    },
+    {
+      "name": "archpillar-mapper",
+      "source": "./plugins/mapper",
+      "description": "A lightweight .NET mapping library built on expression trees."
+    }
+  ]
+}
