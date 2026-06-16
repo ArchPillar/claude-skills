@@ -41,6 +41,7 @@ import sys
 from pathlib import Path
 
 SKILL_PREFIX = "archpillar-"
+LEAD_PARAGRAPH_CAP = 500  # max length of a fallback plugin description derived from SKILL.md
 
 
 def read_json(path: Path) -> dict:
@@ -98,8 +99,13 @@ def check_manifest(manifest: dict, source_root: Path) -> list[str]:
     return errors
 
 
-def short_description(skill_md: Path) -> str:
-    """First sentence of the SKILL.md body (after frontmatter and the H1), as a one-liner."""
+def lead_paragraph(skill_md: Path) -> str:
+    """Lead paragraph of the SKILL.md body: the full first paragraph after frontmatter and the H1.
+
+    The fallback plugin description when the source manifest carries no explicit one. Markdown
+    emphasis is stripped and the paragraph collapsed to a single line, capped at ~500 chars (cut on
+    a word boundary, with an ellipsis, when it runs long).
+    """
     text = skill_md.read_text(encoding="utf-8")
     if text.startswith("---"):
         end = text.find("\n---", 3)
@@ -115,7 +121,9 @@ def short_description(skill_md: Path) -> str:
         body.append(s)
     para = re.sub(r"\*\*|`|\*", "", " ".join(body))
     para = re.sub(r"\s+", " ", para).strip()
-    return (re.split(r"(?<=\.) ", para)[0] if para else "")[:300]
+    if len(para) <= LEAD_PARAGRAPH_CAP:
+        return para
+    return para[:LEAD_PARAGRAPH_CAP].rsplit(" ", 1)[0].rstrip() + "…"
 
 
 def build_staging(args, manifest: dict, out: Path, source_root: Path) -> dict:
@@ -151,7 +159,7 @@ def build_staging(args, manifest: dict, out: Path, source_root: Path) -> dict:
         write_json(plugin_dir / ".claude-plugin" / "plugin.json", {
             "name": name,
             "version": args.version,
-            "description": short_description(skill_dir / "SKILL.md"),
+            "description": entry.get("description") or lead_paragraph(skill_dir / "SKILL.md"),
             "author": {"name": args.author_name},
             "homepage": args.source_repo,
             "repository": args.source_repo,
