@@ -1,0 +1,3 @@
+# Python bytecode cache (build_marketplace.py)
+__pycache__/
+*.pyc

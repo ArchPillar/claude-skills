@@ -1,0 +1,11 @@
+{
+  "$comment": "TEMPLATE — copy to tools/skill-marketplace/skills.json in your source repo and fill in the placeholders. Source manifest: the skills THIS repo publishes to the shared marketplace. The canonical builder (in ArchPillar/claude-skills) publishes each entry only if its skill exists under .claude/skills/<name>/SKILL.md AND its package is published (present in .github/workflows/publish.yml) — declared intent, gated by what actually ships. The publish-skills.yml workflow overrides sourceRepo via --source-repo, so the placeholder below is a sensible default, not load-bearing in CI.",
+  "sourceRepo": "https://github.com/<OWNER>/<REPO>",
+  "marketplace": {
+    "name": "archpillar",
+    "repo": "ArchPillar/claude-skills"
+  },
+  "skills": [
+    { "name": "archpillar-<library>", "package": "<NuGet.Package.Id>" }
+  ]
+}
