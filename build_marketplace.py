@@ -43,6 +43,17 @@ from pathlib import Path
 SKILL_PREFIX = "archpillar-"
 LEAD_PARAGRAPH_CAP = 500  # max length of a fallback plugin description derived from SKILL.md
 
+# SKILL.md frontmatter limits, mirroring the Agent Skills spec (https://agentskills.io/specification).
+# A skill that violates these is silently dropped by the loader — the plugin installs but exposes no
+# skills ("This plugin doesn't have any skills") with no error — so we fail the build instead of
+# shipping a dead plugin. XML tags in `description` are the trap that bit us: `ILocalizer<T>` reads as
+# a `<T>` tag and the whole skill vanishes.
+NAME_MAX = 64
+DESCRIPTION_MAX = 1024
+RESERVED_NAME_WORDS = ("anthropic", "claude")
+_FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.S)
+_XML_TAG_RE = re.compile(r"<[^>]+>")
+
 
 def read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -64,6 +75,66 @@ def derive_package(lib: str) -> str:
     return f"ArchPillar.Extensions.{pascal}"
 
 
+def _frontmatter_field(block: str, field: str) -> str | None:
+    """Extract a scalar frontmatter field, folding a `>`/`|` block scalar to a single line.
+
+    Deliberately tiny and dependency-free (matching the rest of this script — no PyYAML in CI): it
+    handles the two shapes our SKILL.md files use, a plain `field: value` and an indented block
+    scalar. Good enough to validate `name` and `description`; not a general YAML parser.
+    """
+    lines = block.split("\n")
+    for i, line in enumerate(lines):
+        match = re.match(rf"{re.escape(field)}:\s*(.*)$", line)
+        if not match:
+            continue
+        head = match.group(1).strip()
+        if head[:1] in ("|", ">"):  # block scalar — gather the indented continuation lines
+            body: list[str] = []
+            for cont in lines[i + 1:]:
+                if cont.strip() and len(cont) - len(cont.lstrip()) == 0:
+                    break  # a new, non-indented key ends the block
+                body.append(cont.strip())
+            return " ".join(part for part in body if part).strip()
+        return head.strip("\"'")
+    return None
+
+
+def validate_frontmatter(name: str, skill_md: Path) -> list[str]:
+    """Validate a SKILL.md's frontmatter against the Agent Skills spec. Returns errors (empty == OK)."""
+    block_match = _FRONTMATTER_RE.match(skill_md.read_text(encoding="utf-8"))
+    if not block_match:
+        return [f"{name}: SKILL.md is missing YAML frontmatter (it must open with a '---' block)"]
+    block = block_match.group(1)
+    errors: list[str] = []
+
+    fm_name = _frontmatter_field(block, "name")
+    if not fm_name:
+        errors.append(f"{name}: frontmatter 'name' is missing or empty")
+    else:
+        if fm_name != name:
+            errors.append(f"{name}: frontmatter name '{fm_name}' must match the skill directory name")
+        if len(fm_name) > NAME_MAX:
+            errors.append(f"{name}: name is {len(fm_name)} characters (max {NAME_MAX})")
+        if not re.fullmatch(r"[a-z0-9-]+", fm_name):
+            errors.append(f"{name}: name must use only lowercase letters, numbers, and hyphens")
+        if any(word in fm_name.lower() for word in RESERVED_NAME_WORDS):
+            errors.append(f"{name}: name must not contain a reserved word ({', '.join(RESERVED_NAME_WORDS)})")
+
+    desc = _frontmatter_field(block, "description")
+    if not desc:
+        errors.append(f"{name}: frontmatter 'description' is missing or empty")
+    else:
+        if len(desc) > DESCRIPTION_MAX:
+            errors.append(f"{name}: description is {len(desc)} characters (max {DESCRIPTION_MAX})")
+        tags = _XML_TAG_RE.findall(desc)
+        if tags:
+            errors.append(
+                f"{name}: description must not contain XML tags {tags} — the loader silently drops "
+                f"the skill. Reword generic types like 'ILocalizer<T>' without angle brackets."
+            )
+    return errors
+
+
 def check_manifest(manifest: dict, source_root: Path) -> list[str]:
     """Validate skills.json against the source repo. Returns a list of errors (empty == OK).
 
@@ -81,8 +152,11 @@ def check_manifest(manifest: dict, source_root: Path) -> list[str]:
             errors.append(f"duplicate manifest entry: {name}")
         package = entry.get("package") or derive_package(plugin_dir_name(name))
         listed[name] = package
-        if not (skills_dir / name / "SKILL.md").is_file():
-            errors.append(f"manifest lists '{name}' but {skills_dir}/{name}/SKILL.md is missing")
+        skill_md = skills_dir / name / "SKILL.md"
+        if not skill_md.is_file():
+            errors.append(f"manifest lists '{name}' but {skill_md} is missing")
+        else:
+            errors.extend(validate_frontmatter(name, skill_md))
         if package not in publish_yml:
             print(f"WARN: '{name}' -> {package} is not published yet; it will be skipped until it is")
 
@@ -143,6 +217,11 @@ def build_staging(args, manifest: dict, out: Path, source_root: Path) -> dict:
 
         if not (skill_dir / "SKILL.md").is_file():
             print(f"ERROR: manifest lists '{name}' but {skill_dir}/SKILL.md is missing", file=sys.stderr)
+            raise SystemExit(1)
+        fm_errors = validate_frontmatter(name, skill_dir / "SKILL.md")
+        if fm_errors:
+            for fm_error in fm_errors:
+                print(f"ERROR: {fm_error}", file=sys.stderr)
             raise SystemExit(1)
         if package not in publish_yml:
             msg = f"skill '{name}' -> {package} not published (absent from publish.yml)"
