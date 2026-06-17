@@ -7,12 +7,12 @@
     {
       "name": "archpillar-localization",
       "source": "./plugins/localization",
-      "description": "A UI translation library where every translatable string is written once, at the call site, as an in-code ICU MessageFormat default."
+      "description": "Compile-time-extracted UI translation for .NET. Each string is written once at the call site as an in-code ICU MessageFormat default (also the runtime fallback, so the app works with zero translation files); a Roslyn generator extracts them for translators, and per-language catalogs load at runtime as overrides \u2014 an alternative to .resx / IStringLocalizer with no \"missing resource\" state and culture-correct plurals."
     },
     {
       "name": "archpillar-mapper",
       "source": "./plugins/mapper",
-      "description": "A lightweight .NET mapping library built on expression trees."
+      "description": "Explicit, compile-checked object-to-object and DTO mapping for .NET. One mapper definition runs both as an in-memory mapper and as a LINQ/EF Core projection that translates to SQL \u2014 and unlike AutoMapper, every mapping is a named, navigable C# property while any unmapped property fails the build, so there is no hidden convention magic."
     }
   ]
 }
