@@ -2,12 +2,12 @@
   "plugins": {
     "archpillar-localization": {
       "sourceRepo": "https://github.com/ArchPillar/extensions",
-      "version": "1.5.0-preview2",
+      "version": "1.5.0-preview3",
       "dir": "localization"
     },
     "archpillar-mapper": {
       "sourceRepo": "https://github.com/ArchPillar/extensions",
-      "version": "1.5.0-preview2",
+      "version": "1.5.0-preview3",
       "dir": "mapper"
     }
   }

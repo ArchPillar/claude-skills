@@ -1,6 +1,6 @@
 {
   "name": "archpillar-mapper",
-  "version": "1.5.0-preview2",
+  "version": "1.5.0-preview3",
   "description": "Explicit, compile-checked object-to-object and DTO mapping for .NET. One mapper definition runs both as an in-memory mapper and as a LINQ/EF Core projection that translates to SQL \u2014 and unlike AutoMapper, every mapping is a named, navigable C# property while any unmapped property fails the build, so there is no hidden convention magic.",
   "author": {
     "name": "ArchPillar"

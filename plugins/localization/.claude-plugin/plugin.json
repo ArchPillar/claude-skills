@@ -1,6 +1,6 @@
 {
   "name": "archpillar-localization",
-  "version": "1.5.0-preview2",
+  "version": "1.5.0-preview3",
   "description": "Compile-time-extracted UI translation for .NET. Each string is written once at the call site as an in-code ICU MessageFormat default (also the runtime fallback, so the app works with zero translation files); a Roslyn generator extracts them for translators, and per-language catalogs load at runtime as overrides \u2014 an alternative to .resx / IStringLocalizer with no \"missing resource\" state and culture-correct plurals.",
   "author": {
     "name": "ArchPillar"
