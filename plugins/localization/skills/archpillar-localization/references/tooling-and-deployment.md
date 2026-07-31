@@ -15,7 +15,7 @@ project) in the current directory.
 
 | Command | Purpose |
 | --- | --- |
-| `dotnet apl status` | Which assemblies have strings, and how many |
+| `dotnet apl status` | Translation coverage — how much of the app is translated (and, before any language exists, which assemblies have strings). `--detail overall\|language\|project\|matrix` chooses how far it aggregates; default `overall` |
 | `extract` | Emit the source-language catalog (`{Assembly}.en.xliff`). **Runs automatically after each real build** when the package is referenced |
 | `add <culture>` | Create a target file (`{Assembly}.<culture>.xliff`), every entry `NeedsTranslation` |
 | `sync` | Reconcile every language file after code changes; **`sync --check` is the CI gate** |
@@ -26,6 +26,12 @@ project) in the current directory.
 
 **Scope** defaults to the current directory; override with `--solution App.sln`,
 `--project App.csproj` (add `--recurse` for its project dependencies), or `--input bin/Debug/net10.0`.
+
+**Coverage** (`status`) reports **Translated** (a current translation — `Translated` *or* `Final`),
+**Review** (a translation the source drifted under, so it renders but is stale), **Missing**
+(untranslated or absent from the catalog), and a floored **%**. The total column names itself:
+`Strings` at the `language`/`matrix` levels is a string count; `Units` at `project`/`overall` is
+strings × languages, the real work. A project with no language yet shows `—`, not 0%.
 
 > The auto-extracted source catalog is **merged, not overwritten** — keep it in git, and you may
 > edit the source wording in place (a typo/tone fix loads as an override **without a recompile**);
@@ -49,6 +55,16 @@ translator the context the string alone can't. It is recovered by a source scan 
 in the built assembly), so it needs the project's source present at extract time; when the source
 isn't there (a `/pathmap` CI build), `sync` **keeps** any comment already in the file rather than
 dropping it. Comments on the line *above* a call are not extracted — write the note in the parens.
+
+**Source references (opt-in, off by default).** Set
+`<ArchPillarLocalizationExtractReferences>true</ArchPillarLocalizationExtractReferences>` in a project
+(or pass `--references` to `extract`/`sync`) and entries carry the **files** the string is used in
+(gettext `#:`, XLIFF `<note category="reference">`), read from the PDB and recorded project-relative.
+Off by default because it binds a git-tracked catalog to where the code lives — move a call and every
+language file is rewritten. Files, not lines: line numbers would churn the catalog on any edit that
+shifts a line, and a translator has no source tree to look a line up in. Blazor `.razor` components
+resolve correctly; MVC/Razor Pages `.cshtml` markup expressions and display annotations have no debug
+location and get no reference. No PDB simply means no references, and existing ones are preserved.
 
 ## Delivery and deployment
 
